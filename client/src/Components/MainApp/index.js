@@ -1,6 +1,5 @@
 import React from 'react';
 import * as faceapi from 'face-api.js';
-import Webcam from "react-webcam";
 import CameraModule from "../CameraModule"
 import "./index.scss";
 
@@ -19,6 +18,7 @@ class MainApp extends React.Component{
 
     async componentDidMount(){
         var video = document.getElementById("camera");
+        this.fetchWeatherData();
 
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
@@ -28,6 +28,10 @@ class MainApp extends React.Component{
             .catch(e => console.log(e));
     }
 
+    fetchWeatherData() {
+        fetch("api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707").then(res => console.log(res));
+    }
+
 
     async onPlay() {
         console.log("Media streamed!")
@@ -35,7 +39,7 @@ class MainApp extends React.Component{
         await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
 
-        const displaySize = { width: 640, height: 480 };
+        const displaySize = { width: 400, height: 400 };
         const canvas = document.getElementById('result');
         faceapi.matchDimensions(canvas, displaySize);
 
@@ -44,17 +48,15 @@ class MainApp extends React.Component{
 
         const resizedDetections = faceapi.resizeResults(detection, displaySize);
 
-        
         faceapi.draw.drawDetections(canvas, resizedDetections);
+
         // draw a textbox displaying the face expressions with minimum probability into the canvas
         const minProbability = 0.05
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections, minProbability);
         document.getElementById("camera").pause();
-        // const resizedResults = faceapi.resizeResults(detection, displaySize)
-        // const minProbability = 0.05
-        // faceapi.draw.drawFaceExpressions(canvas, resizedResults, minProbability)
-
-
+        document.getElementById("camera").srcObject.getTracks().forEach(function(track) {
+            track.stop();
+          });
     }
 
 
