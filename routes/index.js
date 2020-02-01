@@ -45,34 +45,16 @@ router.get('/callback', async (req, res) => {
 
 router.get('/generate_playlist', async (req, res) => {
   try {
+    var playlistSizeGoal = 30; // can be altered
+
     // STEP 1. Gather all top artists from the user.
     var topArtists = await spotifyApi.getMyTopArtists({"limit": 20, "time_range": "long_term"});
-    // console.log(topArtists.body);
 
     // STEP 2. Gather all artists that the user is following.
     var followedArtists = await spotifyApi.getFollowedArtists({"limit": 20});
-    // console.log(followedArtists.body);
 
     // STEP 3. Gather all the artist URIs (skip duplicates)
-    // var artistNames = []; // for the sake of viewing artist names w debugging
-    var artistURIs = [];
-    var a;
-    var i;
-    for (i = 0; i < topArtists.body["items"].length; i++) {
-      a = topArtists.body["items"][i];
-      if (!artistURIs.includes(a["uri"])) {
-        // artistNames.push(a["name"]);
-        artistURIs.push(a["uri"]);
-      }
-    }
-
-    for (i = 0; i < followedArtists.body["artists"]["items"].length; i++) {
-      a = followedArtists.body["artists"]["items"][i];
-      if (!artistURIs.includes(a["uri"])) {
-        // artistNames.push(a["name"]);
-        artistURIs.push(a["uri"]);
-      }
-    }
+    var artistURIs = getArtistURIs(topArtists, followedArtists);
 
     // STEP 4. Gather the top ten tracks from each of the gathered artists
     var tracks = [];
@@ -110,6 +92,9 @@ router.get('/generate_playlist', async (req, res) => {
 
     // TODO STEP 6. Use Recommendation Seed api call in case there's not enough songs
     // using Mayank's target values for the different audio features to search for songs
+    if (validTracks.length < playlistSizeGoal) {
+
+    }
 
     // STEP 8. Generate Playlist
     var getCurrentUserData = await spotifyApi.getMe();
@@ -122,7 +107,7 @@ router.get('/generate_playlist', async (req, res) => {
     // console.log(fullTrackIds);
     // TODO change this from using fullTrackIds to only using the filtered in trackIds from the algorithm and recommendations
     // for now just using fullTrackIds for testing playlist creation
-    var randomizedTracks = getRandomSubarray(fullTrackIds, 30); // we are doing 30 songs now, can be changed in future
+    var randomizedTracks = getRandomSubarray(fullTrackIds, playlistSizeGoal);
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
     res.status(200).send(randomizedTracks); // right now, just the randomized tracks but will be tracks from algorithm in future
@@ -140,6 +125,29 @@ function getRandomSubarray(arr, size) {
     shuffled[i] = temp;
   }
   return shuffled.slice(0, size);
+}
+
+function getArtistURIs(topArtists, followedArtists) {
+  // var artistNames = []; // for the sake of viewing artist names w debugging
+  var artistURIs = [];
+  var a;
+  var i;
+  for (i = 0; i < topArtists.body["items"].length; i++) {
+    a = topArtists.body["items"][i];
+    if (!artistURIs.includes(a["uri"])) {
+      // artistNames.push(a["name"]);
+      artistURIs.push(a["uri"]);
+    }
+  }
+
+  for (i = 0; i < followedArtists.body["artists"]["items"].length; i++) {
+    a = followedArtists.body["artists"]["items"][i];
+    if (!artistURIs.includes(a["uri"])) {
+      // artistNames.push(a["name"]);
+      artistURIs.push(a["uri"]);
+    }
+  }
+  return artistURIs;
 }
 
 module.exports = router;
