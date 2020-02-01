@@ -295,13 +295,15 @@ a:focus {
 
 /* layout-2 */
 .content--layout-2 {
-	grid-template-areas:	"... title title title"
+	grid-template-columns: 200px 200px 200px 200px; 
+	grid-template-rows: 200px 125px 125px;
+	grid-template-areas:	"title title title ..."
 							"desc desc ... author"
 							"link link ... author";
 }
 
 .content--layout-2 .content__img {
-	grid-column: 3 / 5;
+	grid-column: 4 / 5;
 	grid-row: 1 / 3;
 }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import * as faceapi from 'face-api.js';
 import Webcam from "react-webcam";
 import CameraModule from "../CameraModule"
+import "./index.scss";
 
 const MODEL_URL = '/models'
 
@@ -10,19 +11,20 @@ class MainApp extends React.Component{
     
     constructor(props){
         super(props);
+
+        this.state = {
+            facialExpressionDetected: false,
+        }
     }
 
     async componentDidMount(){
-        console.log(faceapi.nets);
-
         var video = document.getElementById("camera");
-        var canvas = document.getElementById('result');
 
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
                 video.srcObject = stream;
                 return new Promise(resolve => video.onloadedmetadata = resolve);
-            })
+            }).then(this.onPlay)
             .catch(e => console.log(e));
     }
 
@@ -32,8 +34,26 @@ class MainApp extends React.Component{
         await faceapi.loadFaceDetectionModel(MODEL_URL);
         await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
+
+        const displaySize = { width: 640, height: 480 };
+        const canvas = document.getElementById('result');
+        faceapi.matchDimensions(canvas, displaySize);
+
         const detection = await faceapi.detectSingleFace(input).withFaceExpressions();
         console.log(detection);
+
+        const resizedDetections = faceapi.resizeResults(detection, displaySize);
+
+        
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+        // draw a textbox displaying the face expressions with minimum probability into the canvas
+        const minProbability = 0.05
+        faceapi.draw.drawFaceExpressions(canvas, resizedDetections, minProbability);
+        document.getElementById("camera").pause();
+        // const resizedResults = faceapi.resizeResults(detection, displaySize)
+        // const minProbability = 0.05
+        // faceapi.draw.drawFaceExpressions(canvas, resizedResults, minProbability)
+
 
     }
 
@@ -42,10 +62,10 @@ class MainApp extends React.Component{
         return(
             <div>
             <h1>This is the app!</h1>
-
-                <video onLoadedMetadata={this.onPlay} autoPlay={true} id="camera"></video>
-                <canvas id={"result"}></canvas>
-
+                <div id={"facial-detection-container"}>
+                    <video  autoPlay={true} id="camera"></video>
+                    <canvas id={"result"}></canvas>
+                </div>
             </div>
         );
     }
