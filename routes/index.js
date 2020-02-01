@@ -9,7 +9,6 @@ app.use(express.static(path.join(__dirname, 'client', 'build')));
 var SpotifyWebApi = require('spotify-web-api-node');
 scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-read', 'playlist-modify-public', 'playlist-modify-private'];
 
-/* GET home page. */
 router.get('/', function (req, res, next) {
   res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
 });
@@ -61,7 +60,6 @@ router.get('/generate_playlist', async (req, res) => {
     // STEP 4. Gather the top ten tracks from each of the gathered artists
     var trackURIs = [];
 
-    // go through all the artists and get their top 10 tracks
     for (i = 0; i < artistIDs.length; i++) {
       a = artistIDs[i];
       var topTracks = await spotifyApi.getArtistTopTracks(a, "US");
@@ -85,7 +83,7 @@ router.get('/generate_playlist', async (req, res) => {
     //   end += 20;
     // }
 
-    // TODO STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
+    // STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
     if (finalTracks.length < playlistSizeGoal) {
       // todo the actual target values will be from algorithm, currently giving sad songs
       var obj = {
@@ -96,15 +94,15 @@ router.get('/generate_playlist', async (req, res) => {
       };
 
       if (artistIDs.length === 0) {
-        // in the case the user has 0 data, no top artists
+        // In the case the user has 0 data, no top artists
         obj["seed_genres"] = ["acoustic", "pop", "rock", "classical", "alternative"]
       } else {
-        // otherwise, use the data's top 5 favorite artists as seed
+        // Otherwise, use the data's top 5 favorite artists as seed
         obj["seed_artists"] =  artistIDs.splice(0, 5);
       }
       var recommendations = await spotifyApi.getRecommendations(obj);
 
-      // adding recommendations
+      // Adding recommendations
       for (var t = 0; t < recommendations.body["tracks"].length; t++) {
         var trackURI = recommendations.body["tracks"][t]["uri"];
         if (!finalTracks.includes(trackURI)) { // to ensure no duplicate tracks
