@@ -45,7 +45,9 @@ router.get('/callback', async (req, res) => {
 
 router.get('/generate_playlist', async (req, res) => {
   try {
-    var playlistSizeGoal = 30; // can be altered
+    var playlistSizeGoal = 30;
+    var playlistName = "temp title";
+    var playlistDescription = "temp description";
 
     // STEP 1. Gather all top artists from the user.
     var topArtists = await spotifyApi.getMyTopArtists({"limit": 20, "time_range": "long_term"});
@@ -96,11 +98,11 @@ router.get('/generate_playlist', async (req, res) => {
 
     }
 
-    // STEP 8. Generate Playlist
+    // STEP 7. Generate Playlist
     var getCurrentUserData = await spotifyApi.getMe();
     var userID = getCurrentUserData.body["id"];
 
-    var createPlaylist = await spotifyApi.createPlaylist(userID, "lol xd", {"description": "Temp Description"});
+    var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
     // console.log(playlistID);
 
