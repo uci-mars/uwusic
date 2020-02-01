@@ -44,8 +44,9 @@ router.get('/callback', async (req, res) => {
 
 router.get('/generate_playlist', async (req, res) => {
   try {
+    // todo take input from req body for use in algorithm
     var playlistSizeGoal = 30;
-    var playlistName = "temp title";
+    var playlistName = "temp title"; // todo figure out playlist naming convention
     var playlistDescription = "temp description";
 
     // STEP 1. Gather all top artists from the user.
@@ -117,14 +118,15 @@ router.get('/generate_playlist', async (req, res) => {
 
     var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
+    var playlistURI = createPlaylist.body["uri"];
 
     // Randomize the order of the tracks and narrow down the size in case we have > playlistSizeGoal
     var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
 
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
-    // Send Result
-    res.status(200).send(finalTracks);
+    // Send Playlist URI Result
+    res.status(200).send(playlistURI);
   } catch (err) {
     res.status(400).send(err);
   }
