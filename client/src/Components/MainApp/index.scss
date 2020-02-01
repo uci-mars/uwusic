@@ -10,3 +10,10 @@
     position: relative;
     
 }
+
+#camera {
+    width: 400px;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 200px;
+}
