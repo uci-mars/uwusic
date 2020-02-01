@@ -16,7 +16,7 @@ class App extends React.Component {
     const App = () => (
       <div>
         <Switch>
-          <Route exact path='/' component={MainApp}/>
+          <Route exact path='/launch' component={MainApp}/>
         </Switch>
       </div>
     )
