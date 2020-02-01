@@ -93,22 +93,22 @@ router.get('/generate_playlist', async (req, res) => {
       }
     }
 
-    // STEP 5. Obtain all the track audio features
+    // STEP 5. Obtain all the track audio features and TODO add algorithm to filter
+    var validTracks = [];
     var allAudioFeatures = [];
     start = 0;
     end = 20;
     while (end < tracks.length) {
       // (only gathering 20 songs at a time because of URI being too long)
       var tempAudioFeatures = await spotifyApi.getAudioFeaturesForTracks(tracks.slice(start, end));
+      // TODO instead of concat-ing all the audio features, will be filtering here
+      // and will be adding the valid track IDs to validTracks
       allAudioFeatures = allAudioFeatures.concat(tempAudioFeatures.body["audio_features"]);
       start = end + 1;
       end += 20;
     }
-    // console.log(allAudioFeatures);
 
-    // TODO STEP 6. Algorithm to Filter Songs from Mayank here
-
-    // TODO STEP 7. Use Recommendation Seed api call in case there's not enough songs
+    // TODO STEP 6. Use Recommendation Seed api call in case there's not enough songs
     // using Mayank's target values for the different audio features to search for songs
 
     // STEP 8. Generate Playlist
@@ -120,6 +120,8 @@ router.get('/generate_playlist', async (req, res) => {
     // console.log(playlistID);
 
     // console.log(fullTrackIds);
+    // TODO change this from using fullTrackIds to only using the filtered in trackIds from the algorithm and recommendations
+    // for now just using fullTrackIds for testing playlist creation
     var randomizedTracks = getRandomSubarray(fullTrackIds, 30); // we are doing 30 songs now, can be changed in future
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
