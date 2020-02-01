@@ -10,10 +10,6 @@ class MainApp extends React.Component{
     
     constructor(props){
         super(props);
-
-        this.state = {
-
-        }
     }
 
     async componentDidMount(){
@@ -24,7 +20,6 @@ class MainApp extends React.Component{
 
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
-                console.log("ping");
                 video.srcObject = stream;
                 return new Promise(resolve => video.onloadedmetadata = resolve);
             })
@@ -36,21 +31,16 @@ class MainApp extends React.Component{
         
         console.log("Media streamed!")
         await faceapi.loadFaceDetectionModel(MODEL_URL);
-        await faceapi.loadFaceLandmarkModel(MODEL_URL);
-        await faceapi.loadFaceRecognitionModel(MODEL_URL);
+        await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
-        console.log(input);
-        const detection = await faceapi.detectSingleFace(input);
+
+        const detection = await faceapi.detectSingleFace(input).withFaceExpressions();
         console.log(detection);
     
 
     }
 
-    async loadModels () {
-        await faceapi.loadFaceDetectionModel(MODEL_URL)
-        await faceapi.loadFaceLandmarkModel(MODEL_URL)
-        await faceapi.loadFaceRecognitionModel(MODEL_URL)
-      }
+
     
 
     render(){
