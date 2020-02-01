@@ -17,7 +17,7 @@ router.get('/', function (req, res, next) {
 var spotifyApi = new SpotifyWebApi({
   clientId: "527e8f09845b4969a15a9405ce026c69",
   clientSecret: "79a5a2cb300b416c87749a4db42d62c6",
-  redirectUri: "http://localhost:3000/callback"
+  redirectUri: "http://localhost:8081/api/callback"
 });
 
 router.get('/login', (req, res) => {
@@ -28,17 +28,16 @@ router.get('/login', (req, res) => {
 
 router.get('/callback', async (req, res) => {
   const {code} = req.query;
-  console.log(code);
   try {
     var data = await spotifyApi.authorizationCodeGrant(code);
     const {access_token, refresh_token} = data.body;
     spotifyApi.setAccessToken(access_token);
     spotifyApi.setRefreshToken(refresh_token);
 
-    console.log("Access Token: " + access_token);
-    console.log("Refresh Token: " + refresh_token);
+    // console.log("Access Token: " + access_token);
+    // console.log("Refresh Token: " + refresh_token);
 
-    res.redirect('/generate_playlist'); // todo will change this
+    res.redirect('/api/generate_playlist'); // todo will change this
   } catch (err) {
     res.redirect('/#/error/invalid token');
   }
@@ -95,7 +94,6 @@ router.get('/generate_playlist', async (req, res) => {
     }
 
     // STEP 5. Obtain all the track audio features
-    // console.log(tracks);
     var allAudioFeatures = [];
     start = 0;
     end = 20;
@@ -108,10 +106,12 @@ router.get('/generate_playlist', async (req, res) => {
     }
     // console.log(allAudioFeatures);
 
-    // TODO STEP 6. Algorithm to Filter Songs
+    // TODO STEP 6. Algorithm to Filter Songs from Mayank here
 
+    // TODO STEP 7. Use Recommendation Seed api call in case there's not enough songs
+    // using Mayank's target values for the different audio features to search for songs
 
-    // STEP 7. Generate Playlist
+    // STEP 8. Generate Playlist
     var getCurrentUserData = await spotifyApi.getMe();
     var userID = getCurrentUserData.body["id"];
 
@@ -119,12 +119,11 @@ router.get('/generate_playlist', async (req, res) => {
     var playlistID = createPlaylist.body["id"];
     // console.log(playlistID);
 
-    // todo right now we're adding 30 songs, can be changed
     // console.log(fullTrackIds);
-    var randomizedTracks = getRandomSubarray(fullTrackIds, 30);
-    var addTracksToPlaylist = await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
+    var randomizedTracks = getRandomSubarray(fullTrackIds, 30); // we are doing 30 songs now, can be changed in future
+    await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
-    res.status(200).send(trackNames);
+    res.status(200).send(randomizedTracks); // right now, just the randomized tracks but will be tracks from algorithm in future
   } catch (err) {
     res.status(400).send(err);
   }
