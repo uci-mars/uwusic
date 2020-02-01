@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import Landing from './Components/Landing'
 import MainApp from './Components/MainApp'
+import * as faceapi from 'face-api.js';
 import {
   BrowserRouter as Router,
   Switch,
@@ -9,7 +10,10 @@ import {
   Link
 } from "react-router-dom";
 
+
+
 class App extends React.Component {
+
   render() {
     const App = () => (
       <div>

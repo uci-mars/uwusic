@@ -12,6 +12,9 @@ var app = express();
 
 app.use("/", express.static(path.join(__dirname, '/client/build')));
 
+app.use("/models", express.static('models'));
+
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
