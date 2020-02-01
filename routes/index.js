@@ -1,17 +1,23 @@
 var express = require('express');
 var router = express.Router();
+const path = require('path');
+
+const app = express();
+
+app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 var SpotifyWebApi = require('spotify-web-api-node');
 scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-read', 'playlist-modify-public', 'playlist-modify-private'];
+
+/* GET home page. */
+router.get('/', function (req, res, next) {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+});
 
 var spotifyApi = new SpotifyWebApi({
   clientId: "527e8f09845b4969a15a9405ce026c69",
   clientSecret: "79a5a2cb300b416c87749a4db42d62c6",
   redirectUri: "http://localhost:3000/callback"
-});
-
-router.get('/', function (req, res) {
-  res.render('index', {title: 'Express'});
 });
 
 router.get('/login', (req, res) => {
@@ -116,7 +122,7 @@ router.get('/generate_playlist', async (req, res) => {
     // todo right now we're adding 30 songs, can be changed
     // console.log(fullTrackIds);
     var randomizedTracks = getRandomSubarray(fullTrackIds, 30);
-    var addTracksToPlaylist = await spotifyApi.addTracksToPlaylist(playlistID,  randomizedTracks);
+    var addTracksToPlaylist = await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
     res.status(200).send(trackNames);
   } catch (err) {
