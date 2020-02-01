@@ -118,15 +118,15 @@ router.get('/generate_playlist', async (req, res) => {
 
     var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
-    var playlistURI = createPlaylist.body["uri"];
 
     // Randomize the order of the tracks and narrow down the size in case we have > playlistSizeGoal
     var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
 
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
-    // Send Playlist URI Result
-    res.status(200).send(playlistURI);
+    // Send Playlist Link Result
+    var link = "https://open.spotify.com/embed/playlist/" + playlistID;
+    res.status(200).send(link);
   } catch (err) {
     res.status(400).send(err);
   }
