@@ -9,6 +9,7 @@ app.use(express.static(path.join(__dirname, 'client', 'build')));
 var SpotifyWebApi = require('spotify-web-api-node');
 scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-read', 'playlist-modify-public', 'playlist-modify-private'];
 
+/* GET home page. */
 router.get('/', function (req, res, next) {
   res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
 });
@@ -19,9 +20,10 @@ var spotifyApi = new SpotifyWebApi({
   redirectUri: "http://localhost:8081/api/callback"
 });
 
+
 router.get('/login', (req, res) => {
   var html = spotifyApi.createAuthorizeURL(scopes);
-  // console.log(html);
+  console.log(html);
   res.redirect(html + "&show_dialog=true");
 });
 
@@ -49,82 +51,69 @@ router.get('/generate_playlist', async (req, res) => {
     var playlistDescription = "temp description";
 
     // STEP 1. Gather all top artists from the user.
-    var topArtists = await spotifyApi.getMyTopArtists({limit: 20, time_range: "long_term"});
+    var topArtists = await spotifyApi.getMyTopArtists({"limit": 20, "time_range": "long_term"});
 
     // STEP 2. Gather all artists that the user is following.
-    var followedArtists = await spotifyApi.getFollowedArtists({limit: 20});
+    var followedArtists = await spotifyApi.getFollowedArtists({"limit": 20});
 
     // STEP 3. Gather all the artist URIs (skip duplicates)
-    var artistIDs = getArtistIDs(topArtists, followedArtists);
+    var artistURIs = getArtistURIs(topArtists, followedArtists);
 
     // STEP 4. Gather the top ten tracks from each of the gathered artists
-    var trackURIs = [];
+    var tracks = [];
+    var fullTrackIds = [];
+    var trackNames = []; // for the sake of debugging to view track names
+    // console.log(artistURIs);
 
-    for (i = 0; i < artistIDs.length; i++) {
-      a = artistIDs[i];
+    // go through all the artists and get their top 10 tracks
+    for (i = 0; i < artistURIs.length; i++) {
+      a = artistURIs[i].split(":")[2];
       var topTracks = await spotifyApi.getArtistTopTracks(a, "US");
+      // console.log(topTracks.body["tracks"]);
       for (var j = 0; j < topTracks.body["tracks"].length; j++) {
-        trackURIs.push(topTracks.body["tracks"][j]["uri"]);
+        var trackID = topTracks.body["tracks"][j]["id"];
+        tracks.push(trackID);
+        fullTrackIds.push("spotify:track:" + trackID);
+        trackNames.push(topTracks.body["tracks"][j]["name"]);
       }
     }
 
     // STEP 5. Obtain all the track audio features and TODO add algorithm to filter
-    var finalTracks = []; // list of final track URIs that will be added to the playlist
-    // var allAudioFeatures = [];
-    // start = 0;
-    // end = 20;
-    // while (end < tracks.length) {
-    //   // (only gathering 20 songs at a time because of URI being too long)
-    //   var tempAudioFeatures = await spotifyApi.getAudioFeaturesForTracks(tracks.slice(start, end));
-    //   // TODO instead of concat-ing all the audio features, will be filtering here
-    //   // and will be adding the valid track IDs to validTracks
-    //   allAudioFeatures = allAudioFeatures.concat(tempAudioFeatures.body["audio_features"]);
-    //   start = end + 1;
-    //   end += 20;
-    // }
-
-    // STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
-    if (finalTracks.length < playlistSizeGoal) {
-      // todo the actual target values will be from algorithm, currently giving sad songs
-      var obj = {
-        limit: playlistSizeGoal - finalTracks.length,
-        target_danceability: 0.4,
-        target_energy: 0.4,
-        target_valence: 0
-      };
-
-      if (artistIDs.length === 0) {
-        // In the case the user has 0 data, no top artists
-        obj["seed_genres"] = ["acoustic", "pop", "rock", "classical", "alternative"]
-      } else {
-        // Otherwise, use the data's top 5 favorite artists as seed
-        obj["seed_artists"] =  artistIDs.splice(0, 5);
-      }
-      var recommendations = await spotifyApi.getRecommendations(obj);
-
-      // Adding recommendations
-      for (var t = 0; t < recommendations.body["tracks"].length; t++) {
-        var trackURI = recommendations.body["tracks"][t]["uri"];
-        if (!finalTracks.includes(trackURI)) { // to ensure no duplicate tracks
-          finalTracks.push(trackURI);
-        }
-      }
+    var validTracks = [];
+    var allAudioFeatures = [];
+    start = 0;
+    end = 20;
+    while (end < tracks.length) {
+      // (only gathering 20 songs at a time because of URI being too long)
+      var tempAudioFeatures = await spotifyApi.getAudioFeaturesForTracks(tracks.slice(start, end));
+      // TODO instead of concat-ing all the audio features, will be filtering here
+      // and will be adding the valid track IDs to validTracks
+      allAudioFeatures = allAudioFeatures.concat(tempAudioFeatures.body["audio_features"]);
+      start = end + 1;
+      end += 20;
     }
 
-    // STEP 7. Create Playlist and Add Songs
+    // TODO STEP 6. Use Recommendation Seed api call in case there's not enough songs
+    // using Mayank's target values for the different audio features to search for songs
+    if (validTracks.length < playlistSizeGoal) {
+
+    }
+
+    // STEP 7. Generate Playlist
     var getCurrentUserData = await spotifyApi.getMe();
     var userID = getCurrentUserData.body["id"];
 
     var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
+    // console.log(playlistID);
 
-    // Randomize the order of the tracks and narrow down the size in case we have > playlistSizeGoal
-    var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
-
+    // console.log(fullTrackIds);
+    // TODO change this from using fullTrackIds to only using the filtered in trackIds from the algorithm and recommendations
+    // for now just using fullTrackIds for testing playlist creation
+    var randomizedTracks = getRandomSubarray(fullTrackIds, playlistSizeGoal);
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
-    // Send Result
-    res.status(200).send(finalTracks);
+    res.status(200).send(randomizedTracks); // right now, just the randomized tracks but will be tracks from algorithm in future
   } catch (err) {
     res.status(400).send(err);
   }
@@ -141,24 +130,27 @@ function getRandomSubarray(arr, size) {
   return shuffled.slice(0, size);
 }
 
-function getArtistIDs(topArtists, followedArtists) {
-  var artistIDs = [];
+function getArtistURIs(topArtists, followedArtists) {
+  // var artistNames = []; // for the sake of viewing artist names w debugging
+  var artistURIs = [];
   var a;
   var i;
   for (i = 0; i < topArtists.body["items"].length; i++) {
     a = topArtists.body["items"][i];
-    if (!artistIDs.includes(a["id"])) {
-      artistIDs.push(a["id"]);
+    if (!artistURIs.includes(a["uri"])) {
+      // artistNames.push(a["name"]);
+      artistURIs.push(a["uri"]);
     }
   }
 
   for (i = 0; i < followedArtists.body["artists"]["items"].length; i++) {
     a = followedArtists.body["artists"]["items"][i];
-    if (!artistIDs.includes(a["id"])) {
-      artistIDs.push(a["id"]);
+    if (!artistURIs.includes(a["uri"])) {
+      // artistNames.push(a["name"]);
+      artistURIs.push(a["uri"]);
     }
   }
-  return artistIDs;
+  return artistURIs;
 }
 
 module.exports = router;
