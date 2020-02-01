@@ -28,23 +28,17 @@ class MainApp extends React.Component{
 
 
     async onPlay() {
-        
         console.log("Media streamed!")
         await faceapi.loadFaceDetectionModel(MODEL_URL);
         await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
-
         const detection = await faceapi.detectSingleFace(input).withFaceExpressions();
         console.log(detection);
-    
 
     }
 
 
-    
-
     render(){
-
         return(
             <div>
             <h1>This is the app!</h1>

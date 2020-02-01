@@ -1,6 +1,4 @@
 import React from 'react';
-import './App.css';
-import Landing from './Components/Landing'
 import MainApp from './Components/MainApp'
 import * as faceapi from 'face-api.js';
 import {
@@ -18,8 +16,7 @@ class App extends React.Component {
     const App = () => (
       <div>
         <Switch>
-          <Route exact path='/' component={Landing}/>
-          <Route path='/launch' component={MainApp}/>
+          <Route exact path='/' component={MainApp}/>
         </Switch>
       </div>
     )
