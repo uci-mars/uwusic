@@ -156,7 +156,7 @@ function distanceBetween(desired, available) {
 function minDistance(desired, trackList) {
 
   var KNeighborsClassifier = function(nNeighbors, nClasses, power, X, y) {
-    console.log(power);
+    // console.log(power);
 
     this.nNeighbors = nNeighbors;
     this.nTemplates = y.length;
@@ -237,26 +237,26 @@ function minDistance(desired, trackList) {
   var clf = new KNeighborsClassifier(10, 9, 2, X, y);
 
   // Prediction:
-  console.log(desired);
+  // console.log(desired);
   var desired_prediction = clf.predict([desired["danceability"], desired["energy"], desired["valence"]]);
-  console.log(desired_prediction);
+  // console.log(desired_prediction);
   
 
   var trackDistances = {};
   var track;
   for (track in trackList) {
     if (trackList.hasOwnProperty(track)) {
-      console.log(trackList[track]["danceability"]);
+      // console.log(trackList[track]["danceability"]);
       var track_prediction = clf.predict([trackList[track]["danceability"], trackList[track]["energy"], trackList[track]["valence"]]);
-      console.log(track_prediction);
-      console.log(Math.abs(desired_prediction-track_prediction));
-      console.log("d");
+      // console.log(track_prediction);
+      // console.log(Math.abs(desired_prediction-track_prediction));
+      // console.log("d");
       trackDistances[track] = Math.abs(desired_prediction-track_prediction);
-      console.log("huh");
+      // console.log("huh");
     }
   }
 
-  console.log("made it here");
+  // console.log("made it here");
 
   var distancesArray = Object.values(trackDistances);
   var SD = standardDeviation(distancesArray);
@@ -272,31 +272,31 @@ function minDistance(desired, trackList) {
 }
 
 function weatherToMoods(weather) {
-  if (weather === "clear sky") {
+  if (weather === "Clear") {
     return {"happy": 1};
 
-  } else if (weather === "few clouds") {
+  } else if (weather === "Few clouds") {
     return {"happy": 1, "sad": 0.2};
 
-  } else if (weather === "scattered clouds") {
+  } else if (weather === "Scattered clouds") {
     return {"happy": 1, "sad": 0.4};
 
-  } else if (weather === "broken clouds") {
+  } else if (weather === "Broken clouds") {
     return {"happy": 1, "sad": 0.8};
 
-  } else if (weather === "shower rain") {
+  } else if (weather === "Shower rain") {
     return {"happy": 0.5, "sad": 1};
 
-  } else if (weather === "rain") {
+  } else if (weather === "Rain") {
     return {"sad": 1};
 
-  } else if (weather === "thunderstorm") {
+  } else if (weather === "Thunderstorm") {
     return {"sad": 1};
 
-  } else if (weather === "snow") {
+  } else if (weather === "Snow") {
     return {"happy": 1, "sad": 0.2};
 
-  } else if (weather === "mist") {
+  } else if (weather === "Mist") {
     return {"happy": 1, "sad": 1};
 
   } else {

@@ -55,16 +55,15 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
-      method: 'GET'
-    }).then(response => response.json()).then(w => console.log(w.weather[0].main));
-    console.log(req.body);
+    // fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
+    //   method: 'GET'
+    // }).then(response => response.json()).then(w => console.log(w.weather[0].main));
 
     var neutral = req.body["neutral"];
-    var happy = req.body["happy"];
-    var sad = req.body["sad"];
-    var angry = req.body["angry"];
-    var forecast = "clear sky";
+    // var happy = req.body["happy"];
+    // var sad = req.body["sad"];
+    // var angry = req.body["angry"];
+    var forecast = "Clear";
     var expressions = {
       neutral: req.body["neutral"],
       happy: req.body["happy"],
@@ -96,12 +95,14 @@ router.post('/generate_playlist', async (req, res) => {
     // STEP 3. Gather the top ten tracks from each of the gathered artists
     var trackURIs = [];
     var trackIDs = [];
+    var trackURIsToTrackName = {};
 
     for (i = 0; i < artistIDs.length; i++) {
       var topTracks = await spotifyApi.getArtistTopTracks(artistIDs[i], "US"); // country 'US'
       for (var j = 0; j < topTracks.body["tracks"].length; j++) {
         trackURIs.push(topTracks.body["tracks"][j]["uri"]);
         trackIDs.push(topTracks.body["tracks"][j]["id"]);
+        trackURIsToTrackName[topTracks.body["tracks"][j]["uri"]] = topTracks.body["tracks"][j]["name"];
       }
     }
 
@@ -127,10 +128,10 @@ router.post('/generate_playlist', async (req, res) => {
       end += 30;
     }
 
-    console.log("hi");
+    // console.log("hi");
     var weightedAverages = algo["getWeightedAverages"](expressions["happy"], expressions["sad"], expressions["angry"], neutral, forecast);
     var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
-    console.log("bye");
+    // console.log("bye");
     var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
     // STEP 5. Use Recommendation Seed api call in case there's not enough songs or user has no data
@@ -155,6 +156,7 @@ router.post('/generate_playlist', async (req, res) => {
       // Adding recommendations
       for (var t = 0; t < recommendations.body["tracks"].length; t++) {
         finalTracks.add(recommendations.body["tracks"][t]["uri"]); // add track URI
+        trackURIsToTrackName[recommendations.body["tracks"][t]["uri"]] = recommendations.body["tracks"][t]["name"];
       }
     }
 
@@ -166,13 +168,15 @@ router.post('/generate_playlist', async (req, res) => {
     finalTracks = Array.from(finalTracks);
     var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
 
+    // For showing audio features during demo
+    printTrackInfo(tracksToFilter, randomizedTracks, trackURIsToTrackName);
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
     // Send Playlist Link Result
     var link = baseLink + playlistID;
 
     var jsonResponse = {userMetric: mostDominantExpression, playlistUrl: link};
-    console.log(jsonResponse);
+    // console.log(jsonResponse);
 
     res.status(200).send(jsonResponse);
   } catch (err) {
@@ -216,6 +220,20 @@ function getArtistIDs(topArtists) {
     artistIDs.add(topArtists.body["items"][i]["id"]);
   }
   return Array.from(artistIDs);
+}
+
+function printTrackInfo(tracksToFilter, filteredTracks, trackURIsToTrackName) {
+  console.log("Printing audio features for tracks: ");
+  for(var i = 0; i < filteredTracks.length; i++) {
+    if (tracksToFilter.hasOwnProperty(filteredTracks[i])) {
+      console.log("Audio Features for Track ID: " + trackURIsToTrackName[filteredTracks[i]]);
+      for(var feature in tracksToFilter[filteredTracks[i]]) {
+        if (tracksToFilter[filteredTracks[i]].hasOwnProperty(feature)) {
+          console.log("   " + feature + ": " + tracksToFilter[filteredTracks[i]][feature]);
+        }
+      }
+    }
+  }
 }
 
 module.exports = router;
