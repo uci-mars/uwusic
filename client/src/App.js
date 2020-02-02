@@ -1,6 +1,5 @@
 import React from 'react';
 import MainApp from './Components/MainApp'
-import * as faceapi from 'face-api.js';
 import {
   BrowserRouter as Router,
   Switch,

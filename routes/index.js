@@ -15,8 +15,8 @@ var SpotifyWebApi = require('spotify-web-api-node');
 scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-read', 'playlist-modify-public', 'playlist-modify-private'];
 
 var spotifyApi = new SpotifyWebApi({
-  clientId: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
+  clientId: "527e8f09845b4969a15a9405ce026c69",
+  clientSecret: "79a5a2cb300b416c87749a4db42d62c6",
   redirectUri: "http://localhost:8081/api/callback"
 });
 
@@ -55,7 +55,7 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=" + process.env.OWA_APP_ID, {
+    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
       method: 'GET'
     }).then(response => response.json()).then(w => console.log(w.weather[0].main));
     console.log(req.body);
