@@ -9,6 +9,7 @@
     background-color: #000;
     display: flex;
     margin: auto;
+    width: 80vw;
 }
 
 #result {
@@ -19,18 +20,44 @@
     filter: hue-rotate(-110deg) brightness(1.8);
 }
 
+.morph-wrap {
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.morph {
+	position: relative;
+	height: 100%;
+	fill: var(--background-color-2);
+	flex: none;
+}
 
 #loader {
     position: absolute;
-    top: -8px;
+    top: -2px;
     left: 0;
     border-radius: 50%;
-    border-top: 16px solid #3498db;
+    border-top: 0px solid #3498db;
     width: 400px;   
     height: 400px;
     -webkit-animation: spin 2s linear infinite; /* Safari */
     animation: spin 2s linear infinite;
     z-index: 9;
+    box-shadow:
+    inset 0 0 20px #fff,
+
+
+    0 0 50px #fff,
+
+    10px 0 20px #0ff;
   }
   
   /* Safari */
@@ -44,16 +71,22 @@
     100% { transform: rotate(360deg); }
   }
 
-#facial-detection-container {
-    margin: 0 auto;
-    position: relative;
-    
-}
 
 #camera {
     width: 400px;
     height: 400px;
     object-fit: cover;
     border-radius: 200px;
-    filter: grayscale(1);
+    // filter: grayscale(1);
+}
+
+
+#facial-detection-container {
+    margin: 0 auto;
+    position: relative;
+    
+}
+
+#status-container {
+    width: 55%
 }

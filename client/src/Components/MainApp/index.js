@@ -2,6 +2,7 @@ import React from 'react';
 import * as faceapi from 'face-api.js';
 import CameraModule from "../CameraModule"
 import "./index.scss";
+import loading from "../../img/loading.svg"
 
 const MODEL_URL = '/models'
 
@@ -11,29 +12,35 @@ class MainApp extends React.Component{
         super(props);
 
         this.state = {
-            facialExpressionDetected: false,
-            webcamStatus: false,
-            status: "Detecting your facial expression...",
-            facialData: {}
+            status: "",
+            facialData: null
         }
     }
 
     async componentDidMount(){
         var video = document.getElementById("camera");
-
+        this.setState({status: "Starting up your camera..."})
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
                 video.srcObject = stream;
                 return new Promise(resolve => video.onloadedmetadata = resolve);
             }).then(() => {
-                this.onPlay().then(face => this.setState({facialData: face}))
+                this.setState({status: "Detecting your facial expression... "});
+                this.detectFacialExpression().then(face => 
+                    {this.setState({status: "Generating playlist based on your emotion...", facialData: face}); this.generatePlaylist();})
                 
             })
             .catch(e => this.setState({status: "Please enable webcam access on this application."}));
     }
 
+    generatePlaylist() {
+        fetch('/api/generate_playlist', {
+            method: 'post',
+            body: JSON.stringify(this.state.facialData.expressions)
+        }).then((res) => console.log(res));
+    }
 
-    async onPlay() {
+    async detectFacialExpression() {
         await faceapi.loadFaceDetectionModel(MODEL_URL);
         await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
@@ -64,12 +71,15 @@ class MainApp extends React.Component{
 
     render(){
 
-
         return(
             <div id={"main-app"}>
-                <div id={"app-container"}>
-                    {this.state.status}
 
+
+                <div id={"app-container"}>
+                    <div id={"status-container"}>
+                    <h2 style={{fontSize: "50px"}}>{this.state.status}</h2>
+                    {/* <img src={loading}></img> */}
+                    </div>
 
                     <div id={"facial-detection-container"}>
                         <video  autoPlay={true} id="camera"></video>
