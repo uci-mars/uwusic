@@ -43,7 +43,7 @@ router.get('/callback', async (req, res) => {
     // console.log("Access Token: " + access_token);
     // console.log("Refresh Token: " + refresh_token);
 
-    res.redirect('/api/generate_playlist'); // todo will change this
+    res.redirect('/launch'); // todo will change this
   } catch (err) {
     res.redirect('/#/error/invalid token');
   }
@@ -51,9 +51,12 @@ router.get('/callback', async (req, res) => {
 
 router.get('/generate_playlist', async (req, res) => {
   try {
-    // todo use these in algorithm
-    // var expressions = req.body["expressions"];
-    // var forecast = req.body["weather"]["forecast"];
+    var expressions = req.body["expressions"];
+    var neutral = expressions["neutral"];
+    var happy = expressions["happy"];
+    var sad = expressions["sad"];
+    var angry = expressions["angry"];
+    var forecast = req.body["weather"]["forecast"];
 
     var playlistSizeGoal = 25;
     var playlistName = "Feeling "; // todo when given expression data, append mood to title
@@ -99,7 +102,7 @@ router.get('/generate_playlist', async (req, res) => {
       end += 30;
     }
 
-    var weightedAverages = algo["getWeightedAverages"](0, 0 , 0, 1, "clear sky");
+    var weightedAverages = algo["getWeightedAverages"](happy, sad , angry, neutral, forecast);
     var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
     var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
