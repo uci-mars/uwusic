@@ -1,4 +1,4 @@
-#main-app {
+.main-app {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -6,7 +6,6 @@
 }
 
 #app-container {
-    background-color: #000;
     display: flex;
     margin: auto;
     width: 80vw;
@@ -52,12 +51,7 @@
     animation: spin 2s linear infinite;
     z-index: 9;
     box-shadow:
-    inset 0 0 20px #fff,
-
-
-    0 0 50px #fff,
-
-    10px 0 20px #0ff;
+    10px 0 20px #1DB954;
   }
   
   /* Safari */
@@ -89,4 +83,134 @@
 
 #status-container {
     width: 55%
+}
+
+.result-container {
+    display: flex;
+    margin: auto;
+    width: 80vw;
+    color: #fff;
+}
+
+.btn-green {
+    color: #FFF;
+	background-color: #000;
+}
+
+.btn, .navbar .navbar-nav .navbar-btn {
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 500px;
+    padding: 10px 28px 12px;
+    -webkit-transition-property: background-color, border-color, color, -webkit-box-shadow, -webkit-filter;
+    transition-property: background-color, border-color, color, -webkit-box-shadow, -webkit-filter;
+    transition-property: background-color, border-color, color, box-shadow, filter;
+    transition-property: background-color, border-color, color, box-shadow, filter, -webkit-box-shadow, -webkit-filter;
+    -webkit-transition-duration: .3s;
+    transition-duration: .3s;
+    border-width: 0;
+    letter-spacing: 2px;
+    min-width: 160px;
+    text-transform: uppercase;
+    white-space: normal;
+    text-decoration: none;
+}
+
+#happy {
+    background: rgb(29,185,84);
+    background: linear-gradient(90deg, rgba(29,185,84,1) 0%, rgba(29,185,105,1) 30%, rgba(29,185,144,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;
+}
+
+#sad {
+    background: rgb(30,0,99);
+    background: linear-gradient(90deg, rgba(30,0,99,1) 0%, rgba(52,37,96,1) 30%, rgba(85,37,96,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;
+}
+
+#angry {
+    background: rgb(214,86,64);
+    background: linear-gradient(90deg, rgba(214,86,64,1) 0%, rgba(214,127,64,1) 30%, rgba(223,198,52,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;
+}
+
+#neutral{
+    background: rgb(191,179,124);
+    background: linear-gradient(90deg, rgba(191,179,124,1) 0%, rgba(191,190,124,1) 30%, rgba(166,191,124,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;  
+}
+#disgusted {
+    background: rgb(191,179,124);
+    background: linear-gradient(90deg, rgba(191,179,124,1) 0%, rgba(191,190,124,1) 30%, rgba(166,191,124,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;  
+}
+
+#surprised {
+    background: rgb(191,179,124);
+    background: linear-gradient(90deg, rgba(191,179,124,1) 0%, rgba(191,190,124,1) 30%, rgba(166,191,124,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;  
+}
+
+#fearful{
+    background: rgb(191,179,124);
+    background: linear-gradient(90deg, rgba(191,179,124,1) 0%, rgba(191,190,124,1) 30%, rgba(166,191,124,1) 100%);
+    -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 2s; /* Firefox < 16 */
+     -ms-animation: fadein 2s; /* Internet Explorer */
+      -o-animation: fadein 2s; /* Opera < 12.1 */
+         animation: fadein 2s;  
+}
+
+
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Safari, Chrome and Opera > 12.1 */
+@-webkit-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Internet Explorer */
+@-ms-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Opera < 12.1 */
+@-o-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
