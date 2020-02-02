@@ -16,6 +16,8 @@ var spotifyApi = new SpotifyWebApi({
 });
 
 var userID;
+const baseLink = "https://open.spotify.com/embed/playlist/";
+const defaultGenreSeeds = ["acoustic", "pop", "rock", "classical", "alternative"];
 
 router.get('/', function (req, res, next) {
   res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
@@ -48,7 +50,7 @@ router.get('/callback', async (req, res) => {
 router.get('/generate_playlist', async (req, res) => {
   try {
     // todo take input from req body for use in algorithm
-    var playlistSizeGoal = 20;
+    var playlistSizeGoal = 25;
     var playlistName = "temp title"; // todo figure out playlist naming convention
     var playlistDescription = "temp description";
 
@@ -66,8 +68,7 @@ router.get('/generate_playlist', async (req, res) => {
     var trackIDs = [];
 
     for (i = 0; i < artistIDs.length; i++) {
-      a = artistIDs[i];
-      var topTracks = await spotifyApi.getArtistTopTracks(a, "US");
+      var topTracks = await spotifyApi.getArtistTopTracks(artistIDs[i], "US"); // country 'US'
       for (var j = 0; j < topTracks.body["tracks"].length; j++) {
         trackURIs.push(topTracks.body["tracks"][j]["uri"]);
         trackIDs.push(topTracks.body["tracks"][j]["id"]);
@@ -89,12 +90,13 @@ router.get('/generate_playlist', async (req, res) => {
           "energy": audioFeatures[af]["energy"],
           "valence": audioFeatures[af]["valence"],
           "mode": audioFeatures[af]["mode"],
-          "acoustic": audioFeatures[af]["acoustic"]
+          "acousticness": audioFeatures[af]["acousticness"]
         }
       }
       start = end + 1;
       end += 30;
     }
+    console.log(tracksToFilter);
 
     // todo algorithms will filter tracksToFilter and return a list of trackURIs which finalTracks will be set to
     var finalTracks = new Set(); // set of final track URIs that will be added to the playlist
@@ -104,17 +106,17 @@ router.get('/generate_playlist', async (req, res) => {
       // todo the actual target values will be from algorithm, currently giving sad songs
       var obj = {
         limit: playlistSizeGoal,
-        target_danceability: 0.4,
-        target_energy: 0.4,
+        target_danceability: 0,
+        target_energy: 0,
         target_valence: 0
       };
 
       if (artistIDs.length === 0) {
         // In the case the user has 0 data, no top artists
-        obj["seed_genres"] = ["acoustic", "pop", "rock", "classical", "alternative"]
+        obj["seed_genres"] = defaultGenreSeeds
       } else {
         // Otherwise, use the data's top 5 favorite artists as seed
-        obj["seed_artists"] =  artistIDs.slice(0, 5);
+        obj["seed_artists"] = artistIDs.slice(0, 5);
       }
       var recommendations = await spotifyApi.getRecommendations(obj);
 
@@ -130,15 +132,15 @@ router.get('/generate_playlist', async (req, res) => {
 
     // Randomize the order of the tracks and narrow down the size in case we have > playlistSizeGoal
     finalTracks = Array.from(finalTracks);
-    var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
+    // var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
 
-    await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
+    await spotifyApi.addTracksToPlaylist(playlistID, finalTracks);
 
     // Send Playlist Link Result
-    var link = "https://open.spotify.com/embed/playlist/" + playlistID;
+    var link = baseLink + playlistID;
     res.status(200).send(link);
   } catch (err) {
-    if (err.statusCode === 401) { // unauthorized
+    if (err.statusCode === 401) { // unauthorized so redirect to login
       res.redirect('/api/login');
     } else {
       res.status(400).send(err);
@@ -146,16 +148,16 @@ router.get('/generate_playlist', async (req, res) => {
   }
 });
 
-function getRandomSubarray(arr, size) {
-  var shuffled = arr.slice(0), i = arr.length, temp, index;
-  while (i--) {
-    index = Math.floor((i + 1) * Math.random());
-    temp = shuffled[index];
-    shuffled[index] = shuffled[i];
-    shuffled[i] = temp;
-  }
-  return shuffled.slice(0, size);
-}
+// function getRandomSubarray(arr, size) {
+//   var shuffled = arr.slice(0), i = arr.length, temp, index;
+//   while (i--) {
+//     index = Math.floor((i + 1) * Math.random());
+//     temp = shuffled[index];
+//     shuffled[index] = shuffled[i];
+//     shuffled[i] = temp;
+//   }
+//   return shuffled.slice(0, size);
+// }
 
 function getArtistIDs(topArtists, followedArtists) {
   var artistIDs = new Set();
