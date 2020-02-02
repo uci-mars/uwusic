@@ -37,6 +37,7 @@ router.get('/callback', async (req, res) => {
     spotifyApi.setRefreshToken(refresh_token);
     var getCurrentUserData = await spotifyApi.getMe();
     userID = getCurrentUserData.body["id"];
+    displatName = getCurrentUserData.body["display_name"];
 
     // console.log("Access Token: " + access_token);
     // console.log("Refresh Token: " + refresh_token);
@@ -49,10 +50,13 @@ router.get('/callback', async (req, res) => {
 
 router.get('/generate_playlist', async (req, res) => {
   try {
-    // todo take input from req body for use in algorithm
+    // todo use these in algorithm
+    // var expressions = req.body["expressions"];
+    // var forecast = req.body["weather"]["forecast"];
+
     var playlistSizeGoal = 25;
-    var playlistName = "temp title"; // todo figure out playlist naming convention
-    var playlistDescription = "temp description";
+    var playlistName = "Feeling "; // todo when given expression data, append mood to title
+    var playlistDescription = "This is a dynamically generated playlist by uwusic!";
 
     // STEP 1. Gather all top artists from the user.
     var topArtists = await spotifyApi.getMyTopArtists({limit: 20, time_range: "long_term"});
@@ -96,7 +100,7 @@ router.get('/generate_playlist', async (req, res) => {
       start = end + 1;
       end += 30;
     }
-    console.log(tracksToFilter);
+    // console.log(tracksToFilter);
 
     // todo algorithms will filter tracksToFilter and return a list of trackURIs which finalTracks will be set to
     var finalTracks = new Set(); // set of final track URIs that will be added to the playlist
@@ -104,8 +108,9 @@ router.get('/generate_playlist', async (req, res) => {
     // STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
     if (finalTracks.size < playlistSizeGoal) {
       // todo the actual target values will be from algorithm, currently giving sad songs
+      // limit to playlistSizeGoal - finalTracks.size so that we don't pull too much
       var obj = {
-        limit: playlistSizeGoal,
+        limit: playlistSizeGoal - finalTracks.size,
         target_danceability: 0,
         target_energy: 0,
         target_valence: 0
