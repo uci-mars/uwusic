@@ -9,19 +9,20 @@ app.use(express.static(path.join(__dirname, 'client', 'build')));
 var SpotifyWebApi = require('spotify-web-api-node');
 scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-read', 'playlist-modify-public', 'playlist-modify-private'];
 
-router.get('/', function (req, res, next) {
-  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
-});
-
 var spotifyApi = new SpotifyWebApi({
   clientId: "527e8f09845b4969a15a9405ce026c69",
   clientSecret: "79a5a2cb300b416c87749a4db42d62c6",
   redirectUri: "http://localhost:8081/api/callback"
 });
 
+var userID;
+
+router.get('/', function (req, res, next) {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+});
+
 router.get('/login', (req, res) => {
   var html = spotifyApi.createAuthorizeURL(scopes);
-  // console.log(html);
   res.redirect(html + "&show_dialog=true");
 });
 
@@ -32,6 +33,8 @@ router.get('/callback', async (req, res) => {
     const {access_token, refresh_token} = data.body;
     spotifyApi.setAccessToken(access_token);
     spotifyApi.setRefreshToken(refresh_token);
+    var getCurrentUserData = await spotifyApi.getMe();
+    userID = getCurrentUserData.body["id"];
 
     // console.log("Access Token: " + access_token);
     // console.log("Refresh Token: " + refresh_token);
@@ -45,7 +48,7 @@ router.get('/callback', async (req, res) => {
 router.get('/generate_playlist', async (req, res) => {
   try {
     // todo take input from req body for use in algorithm
-    var playlistSizeGoal = 30;
+    var playlistSizeGoal = 20;
     var playlistName = "temp title"; // todo figure out playlist naming convention
     var playlistDescription = "temp description";
 
@@ -60,35 +63,47 @@ router.get('/generate_playlist', async (req, res) => {
 
     // STEP 4. Gather the top ten tracks from each of the gathered artists
     var trackURIs = [];
+    var trackIDs = [];
 
     for (i = 0; i < artistIDs.length; i++) {
       a = artistIDs[i];
       var topTracks = await spotifyApi.getArtistTopTracks(a, "US");
       for (var j = 0; j < topTracks.body["tracks"].length; j++) {
         trackURIs.push(topTracks.body["tracks"][j]["uri"]);
+        trackIDs.push(topTracks.body["tracks"][j]["id"]);
       }
     }
 
-    // STEP 5. Obtain all the track audio features and TODO add algorithm to filter
-    var finalTracks = []; // list of final track URIs that will be added to the playlist
-    // var allAudioFeatures = [];
-    // start = 0;
-    // end = 20;
-    // while (end < tracks.length) {
-    //   // (only gathering 20 songs at a time because of URI being too long)
-    //   var tempAudioFeatures = await spotifyApi.getAudioFeaturesForTracks(tracks.slice(start, end));
-    //   // TODO instead of concat-ing all the audio features, will be filtering here
-    //   // and will be adding the valid track IDs to validTracks
-    //   allAudioFeatures = allAudioFeatures.concat(tempAudioFeatures.body["audio_features"]);
-    //   start = end + 1;
-    //   end += 20;
-    // }
+    // STEP 5. Obtain all the track -> audio features and use algorithm to filter
+    var tracksToFilter = {}; // object holding trackURI -> obj holding audio features
+    start = 0;
+    end = 30;
+    while (end < trackIDs.length) {
+      // (only gathering 30 songs at a time because of URI being too long)
+      var tempAudioFeatures = await spotifyApi.getAudioFeaturesForTracks(trackIDs.slice(start, end));
+      var audioFeatures = tempAudioFeatures.body["audio_features"];
+
+      for (var af = 0; af < audioFeatures.length; af++) {
+        tracksToFilter[audioFeatures[af]["uri"]] = {
+          "danceability": audioFeatures[af]["danceability"],
+          "energy": audioFeatures[af]["energy"],
+          "valence": audioFeatures[af]["valence"],
+          "mode": audioFeatures[af]["mode"],
+          "acoustic": audioFeatures[af]["acoustic"]
+        }
+      }
+      start = end + 1;
+      end += 30;
+    }
+
+    // todo algorithms will filter tracksToFilter and return a list of trackURIs which finalTracks will be set to
+    var finalTracks = new Set(); // set of final track URIs that will be added to the playlist
 
     // STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
-    if (finalTracks.length < playlistSizeGoal) {
+    if (finalTracks.size < playlistSizeGoal) {
       // todo the actual target values will be from algorithm, currently giving sad songs
       var obj = {
-        limit: playlistSizeGoal - finalTracks.length,
+        limit: playlistSizeGoal,
         target_danceability: 0.4,
         target_energy: 0.4,
         target_valence: 0
@@ -99,27 +114,22 @@ router.get('/generate_playlist', async (req, res) => {
         obj["seed_genres"] = ["acoustic", "pop", "rock", "classical", "alternative"]
       } else {
         // Otherwise, use the data's top 5 favorite artists as seed
-        obj["seed_artists"] =  artistIDs.splice(0, 5);
+        obj["seed_artists"] =  artistIDs.slice(0, 5);
       }
       var recommendations = await spotifyApi.getRecommendations(obj);
 
       // Adding recommendations
       for (var t = 0; t < recommendations.body["tracks"].length; t++) {
-        var trackURI = recommendations.body["tracks"][t]["uri"];
-        if (!finalTracks.includes(trackURI)) { // to ensure no duplicate tracks
-          finalTracks.push(trackURI);
-        }
+        finalTracks.add(recommendations.body["tracks"][t]["uri"]); // add track URI
       }
     }
 
     // STEP 7. Create Playlist and Add Songs
-    var getCurrentUserData = await spotifyApi.getMe();
-    var userID = getCurrentUserData.body["id"];
-
     var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
 
     // Randomize the order of the tracks and narrow down the size in case we have > playlistSizeGoal
+    finalTracks = Array.from(finalTracks);
     var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
 
     await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
@@ -128,7 +138,11 @@ router.get('/generate_playlist', async (req, res) => {
     var link = "https://open.spotify.com/embed/playlist/" + playlistID;
     res.status(200).send(link);
   } catch (err) {
-    res.status(400).send(err);
+    if (err.statusCode === 401) { // unauthorized
+      res.redirect('/api/login');
+    } else {
+      res.status(400).send(err);
+    }
   }
 });
 
@@ -144,23 +158,15 @@ function getRandomSubarray(arr, size) {
 }
 
 function getArtistIDs(topArtists, followedArtists) {
-  var artistIDs = [];
-  var a;
+  var artistIDs = new Set();
   var i;
   for (i = 0; i < topArtists.body["items"].length; i++) {
-    a = topArtists.body["items"][i];
-    if (!artistIDs.includes(a["id"])) {
-      artistIDs.push(a["id"]);
-    }
+    artistIDs.add(topArtists.body["items"][i]["id"]);
   }
-
   for (i = 0; i < followedArtists.body["artists"]["items"].length; i++) {
-    a = followedArtists.body["artists"]["items"][i];
-    if (!artistIDs.includes(a["id"])) {
-      artistIDs.push(a["id"]);
-    }
+    artistIDs.add(followedArtists.body["artists"]["items"][i]["id"]);
   }
-  return artistIDs;
+  return Array.from(artistIDs);
 }
 
 module.exports = router;
