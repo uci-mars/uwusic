@@ -1,9 +1,48 @@
+#main-app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    margin: auto;
+}
+
+#app-container {
+    background-color: #000;
+    display: flex;
+    margin: auto;
+}
+
 #result {
     position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
+    filter: hue-rotate(-110deg) brightness(1.8);
 }
+
+
+#loader {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    border-radius: 50%;
+    border-top: 16px solid #3498db;
+    width: 400px;   
+    height: 400px;
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+    z-index: 9;
+  }
+  
+  /* Safari */
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 
 #facial-detection-container {
     margin: 0 auto;
@@ -16,4 +55,5 @@
     height: 400px;
     object-fit: cover;
     border-radius: 200px;
+    filter: grayscale(1);
 }

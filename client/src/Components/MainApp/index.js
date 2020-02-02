@@ -5,7 +5,6 @@ import "./index.scss";
 
 const MODEL_URL = '/models'
 
-
 class MainApp extends React.Component{
     
     constructor(props){
@@ -13,43 +12,43 @@ class MainApp extends React.Component{
 
         this.state = {
             facialExpressionDetected: false,
+            webcamStatus: false,
+            status: "Detecting your facial expression...",
+            facialData: {}
         }
     }
 
     async componentDidMount(){
         var video = document.getElementById("camera");
-        this.fetchWeatherData();
 
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
                 video.srcObject = stream;
                 return new Promise(resolve => video.onloadedmetadata = resolve);
-            }).then(this.onPlay)
-            .catch(e => console.log(e));
-    }
-
-    fetchWeatherData() {
-        fetch("api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707").then(res => console.log(res));
+            }).then(() => {
+                this.onPlay().then(face => this.setState({facialData: face}))
+                
+            })
+            .catch(e => this.setState({status: "Please enable webcam access on this application."}));
     }
 
 
     async onPlay() {
-        console.log("Media streamed!")
         await faceapi.loadFaceDetectionModel(MODEL_URL);
         await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
-
+        console.log("ping");
         const displaySize = { width: 400, height: 400 };
         const canvas = document.getElementById('result');
         faceapi.matchDimensions(canvas, displaySize);
-
+        console.log(canvas);
+        console.log(input);
         const detection = await faceapi.detectSingleFace(input).withFaceExpressions();
-        console.log(detection);
-
+        console.log("ping");
         const resizedDetections = faceapi.resizeResults(detection, displaySize);
 
         faceapi.draw.drawDetections(canvas, resizedDetections);
-
+        console.log("ping");
         // draw a textbox displaying the face expressions with minimum probability into the canvas
         const minProbability = 0.05
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections, minProbability);
@@ -57,17 +56,28 @@ class MainApp extends React.Component{
         document.getElementById("camera").srcObject.getTracks().forEach(function(track) {
             track.stop();
           });
+        document.getElementById("loader").style.display = "none";
+        
+        return detection;
     }
 
 
     render(){
+
+
         return(
-            <div>
-            <h1>This is the app!</h1>
-                <div id={"facial-detection-container"}>
-                    <video  autoPlay={true} id="camera"></video>
-                    <canvas id={"result"}></canvas>
+            <div id={"main-app"}>
+                <div id={"app-container"}>
+                    {this.state.status}
+
+
+                    <div id={"facial-detection-container"}>
+                        <video  autoPlay={true} id="camera"></video>
+                        <canvas id={"result"}></canvas>
+                        <div id={"loader"}></div>
+                    </div>
                 </div>
+
             </div>
         );
     }
