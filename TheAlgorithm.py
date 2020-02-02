@@ -1,3 +1,5 @@
+from statistics import stdev
+
 # mapping facial expressions to desired musical features
 
 # defining mood-feature correlation strengths here
@@ -58,7 +60,8 @@ sample_songs = {"Hello - Adele": {"Acoustic":0.336, "Danceability":0.481, "Energ
                 }
 
 
-def moods(happiness = 0, sadness = 0, anger = 0):
+def moods(happiness = 0, sadness = 0, anger = 0, neutral = 0, weather="none"):
+        
         # place all moods in dictionary
         all_moods = {"Happiness": happiness, "Sadness": sadness, "Anger": anger}
 
@@ -73,8 +76,30 @@ def moods(happiness = 0, sadness = 0, anger = 0):
         for mood, value in detected_moods.items():
                 mood_features.update({mood: mood_to_music_feature(mood)})
 
+        normalized_moods = {}
         # normalize detected moods
-        normalized_moods = normalize_moods(detected_moods)
+        if neutral == 0:
+                normalized_moods = normalize_moods(detected_moods)
+
+        # populate new set of moods if neutral detected based on weather and incorporate with old moods
+        elif neutral > 0:
+                # include neutral for normalization
+                detected_moods.update({"Neutral": neutral})
+                normalized_moods = normalize_moods(detected_moods)
+                # get the set of weather moods
+                weather_moods = normalize_moods(weather_to_moods(weather))
+                # weighted average of neutral and preexisting moods
+                for mood, value in weather_moods.items():
+                        # if weather introduces a mood not detected by face
+                        if mood not in detected_moods:
+                                normalized_moods.update({mood, value})
+                        # otherwise update the normalized moods by weighing it 
+                        elif mood in detected_moods:
+                                normalized_moods[mood] = normalized_moods[mood] + normalized_moods["Neutral"]*weather_moods[mood]
+                # eject neutral
+                normalized_moods.pop("Neutral")
+                # normalizing again after accounting for influence of neutral
+                normalized_moods = normalize_moods(normalized_moods)
 
         # find weighted average of all features
         weighted_averages = {}
@@ -83,10 +108,33 @@ def moods(happiness = 0, sadness = 0, anger = 0):
             feature_total= 0
             for mood, value in normalized_moods.items():
                     feature_total += value*mood_features[mood][feature]
-                    count += 1
-            weighted_averages.update({feature: feature_total/count})
+            weighted_averages.update({feature: feature_total})
 
-        print(min_distance(weighted_averages))
+        return(min_distance(weighted_averages))
+        
+# translating weather to 3 moods
+def weather_to_moods(weather):
+        if weather == "clear sky":
+                return {"Happiness": 1, "Sadness":0,"Anger":0}
+        elif weather == "few clouds":
+                return {"Happiness": 1, "Sadness":0.2,"Anger":0}
+        elif weather == "scattered clouds":
+                return {"Happiness": 1, "Sadness":0.4,"Anger":0}
+        elif weather == "broken clouds":
+                return {"Happiness": 1, "Sadness":0.8,"Anger":0}
+        elif weather == "shower rain":
+                return {"Happiness": 0.5, "Sadness":1,"Anger":0}
+        elif weather == "rain":
+                return {"Happiness": 0, "Sadness":1,"Anger":0}
+        elif weather == "thunderstorm":
+                return {"Happiness": 0, "Sadness":1,"Anger":0.5}
+        elif weather == "snow":
+                return {"Happiness": 1, "Sadness":0,"Anger":0}
+        elif weather == "mist":
+                return {"Happiness": 1, "Sadness":1,"Anger":0}
+        else:
+                return {"Happiness": 1, "Sadness":1,"Anger":1}
+        
 
 # assuming moods do not add up to 1
 def normalize_moods(detected_moods):
@@ -119,40 +167,46 @@ def min_distance(desired):
                 song_distances.update({song:distance_between(desired, values)})
         max_distance = max(song_distances.values())
         final_song_distances = {}
+        SD = stdev(song_distances.values())
+        AVG = sum(song_distances.values())/len(song_distances.values())
         for song, dist in song_distances.items():
-                if dist < 0.4*max_distance:
+                if dist < AVG-0.5*SD:
                         final_song_distances.update({song: dist})
         #for k, v in song_distances.items():
         #        print(k, ":", v)
         return sorted(final_song_distances, key = lambda x: song_distances[x])
                 
 if __name__ == "__main__":
+        
         # pure happiness
         print("TESTING PURE HAPPINESS:")
-        moods(100, 0, 0)
+        print(moods(100, 0, 0))
 
         # pure sadness
         print("\nTESTING PURE SADNESS:")
-        moods(0, 100, 0)
+        print(moods(0, 100, 0))
 
         # pure anger
         print("\nTESTING PURE ANGER:")
-        moods(0, 0, 100)
+        print(moods(0, 0, 100))
 
-'''
-# mostly happy, a little sad and angry
-print("\nTESTING MOSTLY HAPPY:")
-moods(200, 50, 50)
+        # mostly happy, a little sad and angry
+        print("\nTESTING MOSTLY HAPPY:")
+        print(moods(200, 50, 50))
 
-# mostly sad, a little happy and angry
-print("\nTESTING MOSTLY SAD:")
-moods(50, 200, 50)
+        # mostly sad, a little happy and angry
+        print("\nTESTING MOSTLY SAD:")
+        print(moods(50, 200, 50))
 
-# mostly angry, a little sad and happy
-print("\nTESTING MOSTLY ANGRY:")
-moods(50, 50, 200)
+        # mostly angry, a little sad and happy
+        print("\nTESTING MOSTLY ANGRY:")
+        print(moods(50, 50, 200))
 
-# evenly all
-print("\nTESTING EVEN:")
-moods(100, 100, 100)'''
+        # even, no weather
+        print("\nTESTING EVEN:")
+        print(moods(100, 100, 100, 0.05, "none"))
+
+        # with weather
+        # moods(0.5, 0.25, 0.2, 0.05, "mist")
+        # moods(0,0,0,0,"snow")
 
