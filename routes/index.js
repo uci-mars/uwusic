@@ -42,13 +42,13 @@ router.get('/callback', async (req, res) => {
     // console.log("Access Token: " + access_token);
     // console.log("Refresh Token: " + refresh_token);
 
-    res.redirect('/api/generate_playlist'); // todo will change this
+    res.redirect('/launch'); // todo will change this
   } catch (err) {
     res.redirect('/#/error/invalid token');
   }
 });
 
-router.get('/generate_playlist', async (req, res) => {
+router.post('/generate_playlist', async (req, res) => {
   try {
     // todo use these in algorithm
     // var expressions = req.body["expressions"];

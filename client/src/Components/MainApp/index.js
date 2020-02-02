@@ -13,7 +13,8 @@ class MainApp extends React.Component{
 
         this.state = {
             status: "",
-            facialData: null
+            facialData: null,
+            playlistGenerated: null
         }
     }
 
@@ -34,6 +35,7 @@ class MainApp extends React.Component{
     }
 
     generatePlaylist() {
+        console.log("send request");
         fetch('/api/generate_playlist', {
             method: 'post',
             body: JSON.stringify(this.state.facialData.expressions)
@@ -44,18 +46,17 @@ class MainApp extends React.Component{
         await faceapi.loadFaceDetectionModel(MODEL_URL);
         await faceapi.loadFaceExpressionModel(MODEL_URL);
         const input = document.getElementById('camera');
-        console.log("ping");
+
         const displaySize = { width: 400, height: 400 };
         const canvas = document.getElementById('result');
         faceapi.matchDimensions(canvas, displaySize);
-        console.log(canvas);
-        console.log(input);
+
         const detection = await faceapi.detectSingleFace(input).withFaceExpressions();
-        console.log("ping");
+
         const resizedDetections = faceapi.resizeResults(detection, displaySize);
 
         faceapi.draw.drawDetections(canvas, resizedDetections);
-        console.log("ping");
+
         // draw a textbox displaying the face expressions with minimum probability into the canvas
         const minProbability = 0.05
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections, minProbability);
@@ -85,6 +86,10 @@ class MainApp extends React.Component{
                         <video  autoPlay={true} id="camera"></video>
                         <canvas id={"result"}></canvas>
                         <div id={"loader"}></div>
+                    </div>
+
+                    <div>
+                    <iframe src={playlistGenerated} width="400" height="480" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
                     </div>
                 </div>
 
