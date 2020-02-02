@@ -62,13 +62,10 @@ router.get('/generate_playlist', async (req, res) => {
     // STEP 1. Gather all top artists from the user.
     var topArtists = await spotifyApi.getMyTopArtists({limit: 20, time_range: "long_term"});
 
-    // STEP 2. Gather all artists that the user is following.
-    var followedArtists = await spotifyApi.getFollowedArtists({limit: 20});
+    // STEP 2. Gather all the artist URIs (skip duplicates)
+    var artistIDs = getArtistIDs(topArtists);
 
-    // STEP 3. Gather all the artist URIs (skip duplicates)
-    var artistIDs = getArtistIDs(topArtists, followedArtists);
-
-    // STEP 4. Gather the top ten tracks from each of the gathered artists
+    // STEP 3. Gather the top ten tracks from each of the gathered artists
     var trackURIs = [];
     var trackIDs = [];
 
@@ -80,7 +77,7 @@ router.get('/generate_playlist', async (req, res) => {
       }
     }
 
-    // STEP 5. Obtain all the track -> audio features and use algorithm to filter
+    // STEP 4. Obtain all the track -> audio features and use algorithm to filter
     var tracksToFilter = {}; // object holding trackURI -> obj holding audio features
     start = 0;
     end = 30;
@@ -106,7 +103,7 @@ router.get('/generate_playlist', async (req, res) => {
     var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
     var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
-    // STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
+    // STEP 5. Use Recommendation Seed api call in case there's not enough songs or user has no data
     if (finalTracks.size < playlistSizeGoal) {
       // limit to playlistSizeGoal - finalTracks.size so that we don't pull too much
       var obj = {
@@ -131,7 +128,7 @@ router.get('/generate_playlist', async (req, res) => {
       }
     }
 
-    // STEP 7. Create Playlist and Add Songs
+    // STEP 6. Create Playlist and Add Songs
     var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
 
@@ -164,14 +161,11 @@ function getRandomSubarray(arr, size) {
   return shuffled.slice(0, size);
 }
 
-function getArtistIDs(topArtists, followedArtists) {
+function getArtistIDs(topArtists) {
   var artistIDs = new Set();
   var i;
   for (i = 0; i < topArtists.body["items"].length; i++) {
     artistIDs.add(topArtists.body["items"][i]["id"]);
-  }
-  for (i = 0; i < followedArtists.body["artists"]["items"].length; i++) {
-    artistIDs.add(followedArtists.body["artists"]["items"][i]["id"]);
   }
   return Array.from(artistIDs);
 }
