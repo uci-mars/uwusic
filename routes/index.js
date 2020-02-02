@@ -99,7 +99,7 @@ router.get('/generate_playlist', async (req, res) => {
       end += 30;
     }
 
-    var weightedAverages = algo["getWeightedAverages"](1, 0 , 0);
+    var weightedAverages = algo["getWeightedAverages"](0, 0 , 0, 1, "clear sky");
     var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
     var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
