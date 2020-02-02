@@ -14,7 +14,7 @@ class MainApp extends React.Component{
         this.state = {
             status: "",
             facialData: null,
-            // playlistGenerated: null,
+            playlistGenerated: null,
         }
     }
 
@@ -40,7 +40,8 @@ class MainApp extends React.Component{
             method: 'post',
             headers: new Headers({'content-type': 'application/json'}),
             body: JSON.stringify(this.state.facialData.expressions)
-        }).then((res) => console.log(res));
+        }).then(function(response) {
+            return response.text() }).then(playlist => this.setState({playlistGenerated: playlist}));
     }
 
     async detectFacialExpression() {
@@ -88,10 +89,10 @@ class MainApp extends React.Component{
                         <canvas id={"result"}></canvas>
                         <div id={"loader"}></div>
                     </div>
-{/* 
+
                     <div>
-                    <iframe src={playlistGenerated} width="400" height="480" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-                    </div> */}
+                    <iframe src={this.state.playlistGenerated} width="400" height="480" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+                    </div>
                 </div>
 
             </div>

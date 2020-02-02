@@ -56,7 +56,7 @@ router.post('/generate_playlist', async (req, res) => {
   try {
     fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
       method: 'GET'
-    }).then(weather => console.log(weather));
+    }).then(response => response.json()).then(w => console.log(w.weather[0].main));
     console.log(req.body);
     var neutral = req.body["neutral"];
     var happy = req.body["happy"];
