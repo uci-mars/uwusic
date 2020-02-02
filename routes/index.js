@@ -46,7 +46,7 @@ router.get('/callback', async (req, res) => {
     // console.log("Access Token: " + access_token);
     // console.log("Refresh Token: " + refresh_token);
 
-    res.redirect('/launch'); // todo will change this
+    res.redirect('/launch');
   } catch (err) {
     res.redirect('/#/error/invalid token');
   }
@@ -57,12 +57,19 @@ router.post('/generate_playlist', async (req, res) => {
     fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
       method: 'GET'
     }).then(weather => console.log(weather));
-    console.log(req.body);
+    // console.log(req.body);
     var neutral = req.body["neutral"];
     var happy = req.body["happy"];
     var sad = req.body["sad"];
     var angry = req.body["angry"];
+    var surprised = req.body["surprised"];
+    var disgusted = req.body["disgusted"];
+    var fearful = req.body["fearful"];
     var forecast = "clear sky";
+
+    if ((neutral + surprised + disgusted + fearful) > 0) { // if any of these other emotions pop up, return a neutral playlist
+      neutral = 1;
+    }
 
     var playlistSizeGoal = 25;
     var playlistName = "Feeling "; // todo when given expression data, append mood to title
