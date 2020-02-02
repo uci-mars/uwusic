@@ -2,8 +2,11 @@ var express = require('express');
 var router = express.Router();
 const path = require('path');
 var algo = require('./algo.js');
+var fetch = require('node-fetch');
 
 const app = express();
+
+
 
 app.use(express.static(path.join(__dirname, 'client', 'build')));
 
@@ -51,7 +54,10 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-
+    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
+      method: 'GET'
+    }).then(weather => console.log(weather));
+    console.log(req.body);
     var neutral = req.body["neutral"];
     var happy = req.body["happy"];
     var sad = req.body["sad"];

@@ -38,6 +38,7 @@ class MainApp extends React.Component{
         console.log("send request");
         fetch('/api/generate_playlist', {
             method: 'post',
+            headers: new Headers({'content-type': 'application/json'}),
             body: JSON.stringify(this.state.facialData.expressions)
         }).then((res) => console.log(res));
     }
