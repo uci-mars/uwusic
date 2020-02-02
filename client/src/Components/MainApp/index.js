@@ -1,8 +1,9 @@
 import React from 'react';
 import * as faceapi from 'face-api.js';
-import CameraModule from "../CameraModule"
+// import CameraModule from "../CameraModule"
 import "./index.scss";
-import loading from "../../img/loading.svg"
+import loading from "../../img/loading.svg";
+import Iframe from 'react-iframe';
 
 const MODEL_URL = '/models'
 
@@ -14,7 +15,9 @@ class MainApp extends React.Component{
         this.state = {
             status: "",
             facialData: null,
-            playlistGenerated: null,
+            playlistGenerated: false,
+            playlistUrl: null,
+            userMood: null
         }
     }
 
@@ -36,12 +39,18 @@ class MainApp extends React.Component{
 
     generatePlaylist() {
         console.log("send request");
+        const that = this;        
+
         fetch('/api/generate_playlist', {
             method: 'post',
             headers: new Headers({'content-type': 'application/json'}),
             body: JSON.stringify(this.state.facialData.expressions)
         }).then(function(response) {
-            return response.text() }).then(playlist => this.setState({playlistGenerated: playlist}));
+            return response.json();
+        }).then(function(jsonData) {
+            console.log(jsonData);
+            that.setState({status: "Hi, you seem to be feeling " + jsonData.userMetric + ". Here is a playlist we made to start your day!", playlistUrl: jsonData.playlistUrl, userMood: jsonData.userMetric, playlistGenerated: true});
+        })
     }
 
     async detectFacialExpression() {
@@ -73,27 +82,47 @@ class MainApp extends React.Component{
 
 
     render(){
+        let appModule;
 
-        return(
-            <div id={"main-app"}>
+        if (this.state.playlistGenerated) {
+            appModule = 
 
+            <div className={"result-container"}>
+                <div id={"status-container"}>
+                    <h2 style={{fontSize: "50px"}}>Hi, you seem to be feeling <span style={{textDecoration: "underline"}}>{this.state.userMood}</span>. Here is a playlist we made to start your day!</h2>
+                    <a href={this.state.playlistUrl} id="generic-btn-premium" role="button" class="btn btn-green">
+                        OPEN ON SPOTIFY APP
+                    </a>
+                </div>
 
-                <div id={"app-container"}>
+                <div style={{marginLeft: "36px"}}>
+                    <Iframe url={this.state.playlistUrl} width="400" height="480" ></Iframe>
+                </div>
+            </div>
+            
+            
+
+          } else {
+            appModule = 
+
+                <div id={"app-container"} >
                     <div id={"status-container"}>
                     <h2 style={{fontSize: "50px"}}>{this.state.status}</h2>
-                    {/* <img src={loading}></img> */}
-                    </div>
+                    <img src={loading}></img>
+                </div>
 
                     <div id={"facial-detection-container"}>
                         <video  autoPlay={true} id="camera"></video>
                         <canvas id={"result"}></canvas>
                         <div id={"loader"}></div>
                     </div>
-
-                    <div>
-                    <iframe src={this.state.playlistGenerated} width="400" height="480" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-                    </div>
                 </div>
+          }
+
+        return(
+            <div class={"main-app"} id={this.state.userMood}>
+
+                    {appModule}
 
             </div>
         );

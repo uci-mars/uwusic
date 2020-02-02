@@ -1,6 +1,6 @@
 body {
-  --text-color: #fff;
-  --background-color: #000;
+  --text-color: #000;
+  --background-color: #fff;
   --background-color-2: #282faf;
   --background-color-3: #202692;
   --link-color: #03b9f1;
@@ -13,6 +13,7 @@ body {
   background-color: var(--background-color);
   -webkit-font-smoothing: antialiased;
   overflow: hidden; 
+  margin: 0;
 }
 
 code {

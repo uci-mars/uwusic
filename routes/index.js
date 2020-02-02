@@ -3,6 +3,8 @@ var router = express.Router();
 const path = require('path');
 var algo = require('./algo.js');
 var fetch = require('node-fetch');
+var moment = require('moment');
+require('dotenv').config()
 
 const app = express();
 
@@ -13,8 +15,8 @@ var SpotifyWebApi = require('spotify-web-api-node');
 scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-read', 'playlist-modify-public', 'playlist-modify-private'];
 
 var spotifyApi = new SpotifyWebApi({
-  clientId: "527e8f09845b4969a15a9405ce026c69",
-  clientSecret: "79a5a2cb300b416c87749a4db42d62c6",
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
   redirectUri: "http://localhost:8081/api/callback"
 });
 
@@ -53,10 +55,11 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
+    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=" + process.env.OWA_APP_ID, {
       method: 'GET'
     }).then(response => response.json()).then(w => console.log(w.weather[0].main));
     console.log(req.body);
+
     var neutral = req.body["neutral"];
     var happy = req.body["happy"];
     var sad = req.body["sad"];
@@ -81,7 +84,7 @@ router.post('/generate_playlist', async (req, res) => {
     }
 
     var playlistSizeGoal = 25;
-    var playlistName = "Feeling " + mostDominantExpression;
+    var playlistName = "Feeling " + mostDominantExpression + " @ " + moment().format('MM/DD/YYYY h:mm a').toString();
     var playlistDescription = "This is a dynamically generated playlist by uwusic!";
 
     // STEP 1. Gather all top artists from the user.
@@ -165,7 +168,10 @@ router.post('/generate_playlist', async (req, res) => {
 
     // Send Playlist Link Result
     var link = baseLink + playlistID;
-    res.status(200).send(link);
+
+    var jsonResponse = {userMetric: mostDominantExpression, playlistUrl: link};
+
+    res.status(200).send(jsonResponse);
   } catch (err) {
     if (err.statusCode === 401) { // unauthorized so redirect to login
       res.redirect('/api/login');
