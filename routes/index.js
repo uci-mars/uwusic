@@ -51,12 +51,12 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-    var expressions = req.body["expressions"];
-    var neutral = expressions["neutral"];
-    var happy = expressions["happy"];
-    var sad = expressions["sad"];
-    var angry = expressions["angry"];
-    var forecast = req.body["weather"]["forecast"];
+
+    var neutral = req.body["neutral"];
+    var happy = req.body["happy"];
+    var sad = req.body["sad"];
+    var angry = req.body["angry"];
+    var forecast = "clear sky";
 
     var playlistSizeGoal = 25;
     var playlistName = "Feeling "; // todo when given expression data, append mood to title
