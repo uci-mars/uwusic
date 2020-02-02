@@ -117,22 +117,27 @@ def min_distance(desired):
         song_distances = {}
         for song, values in sample_songs.items():
                 song_distances.update({song:distance_between(desired, values)})
+        max_distance = max(song_distances.values())
+        final_song_distances = {}
+        for song, dist in song_distances.items():
+                if dist < 0.4*max_distance:
+                        final_song_distances.update({song: dist})
         #for k, v in song_distances.items():
         #        print(k, ":", v)
-        return sorted(song_distances, key = lambda x: song_distances[x])
+        return sorted(final_song_distances, key = lambda x: song_distances[x])
                 
+if __name__ == "__main__":
+        # pure happiness
+        print("TESTING PURE HAPPINESS:")
+        moods(100, 0, 0)
 
-# pure happiness
-print("TESTING PURE HAPPINESS:")
-moods(100, 0, 0)
+        # pure sadness
+        print("\nTESTING PURE SADNESS:")
+        moods(0, 100, 0)
 
-# pure sadness
-print("\nTESTING PURE SADNESS:")
-moods(0, 100, 0)
-
-# pure anger
-print("\nTESTING PURE ANGER:")
-moods(0, 0, 100)
+        # pure anger
+        print("\nTESTING PURE ANGER:")
+        moods(0, 0, 100)
 
 '''
 # mostly happy, a little sad and angry
