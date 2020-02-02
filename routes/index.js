@@ -7,7 +7,6 @@ var fetch = require('node-fetch');
 const app = express();
 
 
-
 app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 var SpotifyWebApi = require('spotify-web-api-node');
@@ -57,22 +56,26 @@ router.post('/generate_playlist', async (req, res) => {
     fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
       method: 'GET'
     }).then(weather => console.log(weather));
-    // console.log(req.body);
-    var neutral = req.body["neutral"];
-    var happy = req.body["happy"];
-    var sad = req.body["sad"];
-    var angry = req.body["angry"];
-    var surprised = req.body["surprised"];
-    var disgusted = req.body["disgusted"];
-    var fearful = req.body["fearful"];
-    var forecast = "clear sky";
 
-    if ((neutral + surprised + disgusted + fearful) > 0) { // if any of these other emotions pop up, return a neutral playlist
+    var expressions = {
+      neutral: req.body["neutral"],
+      happy: req.body["happy"],
+      sad: req.body["sad"],
+      angry: req.body["angry"],
+      surprised: req.body["surprised"],
+      disgusted: req.body["disgusted"],
+      fearful: req.body["fearful"],
+    };
+
+    var mostDominantExpression = getMostDominantExpression(expressions);
+    // if we are unable to find a dominant expression (just in case) or any of these other emotions pop up, return a neutral playlist
+    if (mostDominantExpression === "" || (expressions["neutral"] + expressions["surprised"] + expressions["disgusted"] + expressions["fearful"]) > 0) {
       neutral = 1;
+      mostDominantExpression = "neutral";
     }
 
     var playlistSizeGoal = 25;
-    var playlistName = "Feeling "; // todo when given expression data, append mood to title
+    var playlistName = "Feeling " + mostDominantExpression;
     var playlistDescription = "This is a dynamically generated playlist by uwusic!";
 
     // STEP 1. Gather all top artists from the user.
@@ -115,7 +118,7 @@ router.post('/generate_playlist', async (req, res) => {
       end += 30;
     }
 
-    var weightedAverages = algo["getWeightedAverages"](happy, sad , angry, neutral, forecast);
+    var weightedAverages = algo["getWeightedAverages"](expressions["happy"], expressions["sad"], expressions["angry"], neutral, forecast);
     var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
     var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
@@ -165,6 +168,20 @@ router.post('/generate_playlist', async (req, res) => {
     }
   }
 });
+
+function getMostDominantExpression(expressions) {
+  var mostDominant = "";
+  var largestScore = 0;
+  for (var e in expressions) {
+    if (expressions.hasOwnProperty(e)) {
+      if (expressions[e] >= largestScore) {
+        mostDominant = e;
+        largestScore = expressions[e];
+      }
+    }
+  }
+  return mostDominant;
+}
 
 function getRandomSubarray(arr, size) {
   var shuffled = arr.slice(0), i = arr.length, temp, index;
