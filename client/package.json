@@ -38,6 +38,6 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8081",
+  "proxy": "https://uwusic.herokuapp.com/launch/",
   "homepage": "./"
 }
