@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const path = require('path');
+var algo = require('./algo.js');
 
 const app = express();
 
@@ -50,9 +51,12 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-    // todo use these in algorithm
-    // var expressions = req.body["expressions"];
-    // var forecast = req.body["weather"]["forecast"];
+    var expressions = req.body["expressions"];
+    var neutral = expressions["neutral"];
+    var happy = expressions["happy"];
+    var sad = expressions["sad"];
+    var angry = expressions["angry"];
+    var forecast = req.body["weather"]["forecast"];
 
     var playlistSizeGoal = 25;
     var playlistName = "Feeling "; // todo when given expression data, append mood to title
@@ -61,13 +65,10 @@ router.post('/generate_playlist', async (req, res) => {
     // STEP 1. Gather all top artists from the user.
     var topArtists = await spotifyApi.getMyTopArtists({limit: 20, time_range: "long_term"});
 
-    // STEP 2. Gather all artists that the user is following.
-    var followedArtists = await spotifyApi.getFollowedArtists({limit: 20});
+    // STEP 2. Gather all the artist URIs (skip duplicates)
+    var artistIDs = getArtistIDs(topArtists);
 
-    // STEP 3. Gather all the artist URIs (skip duplicates)
-    var artistIDs = getArtistIDs(topArtists, followedArtists);
-
-    // STEP 4. Gather the top ten tracks from each of the gathered artists
+    // STEP 3. Gather the top ten tracks from each of the gathered artists
     var trackURIs = [];
     var trackIDs = [];
 
@@ -79,7 +80,7 @@ router.post('/generate_playlist', async (req, res) => {
       }
     }
 
-    // STEP 5. Obtain all the track -> audio features and use algorithm to filter
+    // STEP 4. Obtain all the track -> audio features and use algorithm to filter
     var tracksToFilter = {}; // object holding trackURI -> obj holding audio features
     start = 0;
     end = 30;
@@ -100,20 +101,19 @@ router.post('/generate_playlist', async (req, res) => {
       start = end + 1;
       end += 30;
     }
-    // console.log(tracksToFilter);
 
-    // todo algorithms will filter tracksToFilter and return a list of trackURIs which finalTracks will be set to
-    var finalTracks = new Set(); // set of final track URIs that will be added to the playlist
+    var weightedAverages = algo["getWeightedAverages"](happy, sad , angry, neutral, forecast);
+    var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
+    var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
-    // STEP 6. Use Recommendation Seed api call in case there's not enough songs or user has no data
+    // STEP 5. Use Recommendation Seed api call in case there's not enough songs or user has no data
     if (finalTracks.size < playlistSizeGoal) {
-      // todo the actual target values will be from algorithm, currently giving sad songs
       // limit to playlistSizeGoal - finalTracks.size so that we don't pull too much
       var obj = {
         limit: playlistSizeGoal - finalTracks.size,
-        target_danceability: 0,
-        target_energy: 0,
-        target_valence: 0
+        target_danceability: weightedAverages["danceability"],
+        target_energy: weightedAverages["energy"],
+        target_valence: weightedAverages["valence"]
       };
 
       if (artistIDs.length === 0) {
@@ -131,15 +131,15 @@ router.post('/generate_playlist', async (req, res) => {
       }
     }
 
-    // STEP 7. Create Playlist and Add Songs
+    // STEP 6. Create Playlist and Add Songs
     var createPlaylist = await spotifyApi.createPlaylist(userID, playlistName, {"description": playlistDescription});
     var playlistID = createPlaylist.body["id"];
 
     // Randomize the order of the tracks and narrow down the size in case we have > playlistSizeGoal
     finalTracks = Array.from(finalTracks);
-    // var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
+    var randomizedTracks = getRandomSubarray(finalTracks, playlistSizeGoal);
 
-    await spotifyApi.addTracksToPlaylist(playlistID, finalTracks);
+    await spotifyApi.addTracksToPlaylist(playlistID, randomizedTracks);
 
     // Send Playlist Link Result
     var link = baseLink + playlistID;
@@ -153,25 +153,22 @@ router.post('/generate_playlist', async (req, res) => {
   }
 });
 
-// function getRandomSubarray(arr, size) {
-//   var shuffled = arr.slice(0), i = arr.length, temp, index;
-//   while (i--) {
-//     index = Math.floor((i + 1) * Math.random());
-//     temp = shuffled[index];
-//     shuffled[index] = shuffled[i];
-//     shuffled[i] = temp;
-//   }
-//   return shuffled.slice(0, size);
-// }
+function getRandomSubarray(arr, size) {
+  var shuffled = arr.slice(0), i = arr.length, temp, index;
+  while (i--) {
+    index = Math.floor((i + 1) * Math.random());
+    temp = shuffled[index];
+    shuffled[index] = shuffled[i];
+    shuffled[i] = temp;
+  }
+  return shuffled.slice(0, size);
+}
 
-function getArtistIDs(topArtists, followedArtists) {
+function getArtistIDs(topArtists) {
   var artistIDs = new Set();
   var i;
   for (i = 0; i < topArtists.body["items"].length; i++) {
     artistIDs.add(topArtists.body["items"][i]["id"]);
-  }
-  for (i = 0; i < followedArtists.body["artists"]["items"].length; i++) {
-    artistIDs.add(followedArtists.body["artists"]["items"][i]["id"]);
   }
   return Array.from(artistIDs);
 }
