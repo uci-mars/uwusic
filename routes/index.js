@@ -69,9 +69,10 @@ router.post('/generate_playlist', async (req, res) => {
 
     var mostDominantExpression = getMostDominantExpression(expressions);
     // if we are unable to find a dominant expression (just in case) or any of these other emotions pop up, return a neutral playlist
-    if (mostDominantExpression === "" || (expressions["neutral"] + expressions["surprised"] + expressions["disgusted"] + expressions["fearful"]) > 0) {
+    if (mostDominantExpression === "" || (mostDominantExpression !== "happy" && mostDominantExpression !== "sad" && mostDominantExpression !== "angry")) {
       neutral = 1;
-      mostDominantExpression = "neutral";
+    } else {
+      neutral = 0;
     }
 
     var playlistSizeGoal = 25;
