@@ -127,8 +127,10 @@ router.post('/generate_playlist', async (req, res) => {
       end += 30;
     }
 
+    console.log("hi");
     var weightedAverages = algo["getWeightedAverages"](expressions["happy"], expressions["sad"], expressions["angry"], neutral, forecast);
     var filteredTracks = algo["getFilteredTracks"](weightedAverages, tracksToFilter);
+    console.log("bye");
     var finalTracks = new Set(filteredTracks); // set of final track URIs that will be added to the playlist
 
     // STEP 5. Use Recommendation Seed api call in case there's not enough songs or user has no data
@@ -170,6 +172,7 @@ router.post('/generate_playlist', async (req, res) => {
     var link = baseLink + playlistID;
 
     var jsonResponse = {userMetric: mostDominantExpression, playlistUrl: link};
+    console.log(jsonResponse);
 
     res.status(200).send(jsonResponse);
   } catch (err) {
