@@ -53,10 +53,10 @@ router.get('/callback', async (req, res) => {
 
 router.post('/generate_playlist', async (req, res) => {
   try {
-    fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
-      method: 'GET'
-    }).then(weather => console.log(weather));
-
+    // fetch("https://api.openweathermap.org/data/2.5/weather?q=Irvine&APPID=0c65abcbf74e0d967f0d1bb61f37d707", {
+    //   method: 'GET'
+    // }).then(weather => console.log(weather));
+    var forecast = "clear sky";
     var expressions = {
       neutral: req.body["neutral"],
       happy: req.body["happy"],
