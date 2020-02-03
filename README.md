@@ -1,5 +1,5 @@
 # uwusic
-music for uwu
+music for uwu - HackUCI 2020
 
 ## What it does
 Securely log into your own Spotify account and get a picture of your face. Not sure how you're feeling? We'll tell you! 
