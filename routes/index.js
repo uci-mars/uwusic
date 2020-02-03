@@ -17,7 +17,7 @@ scopes = ['user-read-private', 'user-read-email', 'user-top-read', 'user-follow-
 var spotifyApi = new SpotifyWebApi({
   clientId: "527e8f09845b4969a15a9405ce026c69",
   clientSecret: "79a5a2cb300b416c87749a4db42d62c6",
-  redirectUri: "/api/callback"
+  redirectUri: "https://uwusic.herokuapp.com/api/callback"
 });
 
 var userID;
