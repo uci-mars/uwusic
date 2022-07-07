@@ -13,7 +13,7 @@
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "morgan": "~1.9.1",
     "node-fetch": "^2.6.0",
     "spotify-web-api-node": "^4.0.0"
